@@ -3,15 +3,18 @@ import torch
 from torch.utils.data import Dataset
 
 class CharDataset(Dataset):
-    def __init__(self, data):
-        if hasattr(data, "ood_perc"):
-            ood_perc = data.ood_perc
-            data.ood_perc = 0  # shut down the randomness
-        chars = sorted(list(set(list(itertools.chain.from_iterable(data)))) + [-100, ])
+    @classmethod
+    def load_rps_data(cls, data):
+        moves = [0, 1 ,2]
+        chars = list(set(list(itertools.chain.from_iterable(data))))
+        chars = [-100, ] + moves + sorted([c for c in chars if type(c) != int])
+        return cls(data, chars)
+
+    def __init__(self, data, chars, ood_perc = None):
+
         data_size, vocab_size = len(data), len(chars)  # vocab size 61, with -100 sorted to the front
         max_len = max([len(data[_]) for _ in range(len(data))])  # should be 60 in Othello
-        print('Dataset created has %d sequences, %d unique words.' % (data_size, vocab_size))
-        
+        print('Dataset created has %d sequences, %d unique words.' % (data_size, vocab_size))  
         self.stoi = {ch: i for i, ch in enumerate(chars)}
         self.itos = {i: ch for i, ch in enumerate(chars)}
         self.max_len = max_len
